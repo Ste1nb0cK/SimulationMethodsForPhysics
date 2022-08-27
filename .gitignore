@@ -4,3 +4,4 @@
 *.dir-locals.el
 *.o
 foo
+*/.mypy_cache

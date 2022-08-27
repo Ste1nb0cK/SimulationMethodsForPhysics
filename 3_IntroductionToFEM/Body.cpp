@@ -1,6 +1,4 @@
 #include "Body.h"
-#include "Constants.h"
-#include <cmath>
 void Body::initiate(double x0, double y0, double vx0, double vy0,
                     double m0, double R0){
     //Define the initial conditions of the simulation

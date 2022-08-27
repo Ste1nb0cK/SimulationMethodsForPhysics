@@ -1,4 +1,7 @@
 //Class declaration
+#pragma once
+#include <cmath>
+#include "Constants.h"
 class Body;
 
 class Body{

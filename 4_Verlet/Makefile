@@ -1,6 +1,6 @@
 CXX = g++
 Plot_File_Name = OrbitPlot.pdf
-OBJECTS = Body.o Planet.o
+OBJECTS = Body.o Planet_Vector.o vector.o
 Python = python3
 
 ${Plot_File_Name}: foo Plotter.py data.dat
@@ -16,4 +16,5 @@ data.dat: foo
 
 
 clean:
+	rm *.o
 	rm foo
