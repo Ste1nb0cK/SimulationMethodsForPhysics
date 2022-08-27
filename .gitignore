@@ -2,3 +2,5 @@
 *.dat
 *.x
 *.dir-locals.el
+*.o
+foo
