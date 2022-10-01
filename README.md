@@ -16,3 +16,6 @@ Implementations of [Euler](https://en.wikipedia.org/wiki/Euler_method#Derivation
 Implementation of the class Body to simulate the motion of a particle under a [Newtonian gravity](https://en.wikipedia.org/wiki/Newton%27s_law_of_universal_gravitation) force. The class has methods for updating the state of the system, calculating the force and printing out positions. The initial conditions can be adjusted in Planet.cpp and the result plot is in OrbitPlot.pdf and the data of the positions and time is in data.dat. 
 
 WARNING: you need python 3.0+, pandas and matplotlib to run the makefile as the script Plotter.py is in charge of creating the plot. 
+
+## 4. Verlet Method
+Very similar to the previous one, but know the method to updte the state is Verlet's algorithm and the library vector.h is used write the problem in a "vectorized" way.

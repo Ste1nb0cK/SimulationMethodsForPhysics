@@ -1,9 +1,10 @@
+#Script for finding sing change in the plot data of a function
 import pandas as pd
 from math import copysign
-colnames =  ["x", "R", "f"] #name of columns
-df = pd.read_csv("data.dat", sep="\t", header=None, names=colnames )
+colnames =  ["x", "y"] #name of columns
+df = pd.read_csv("datosb.dat", sep="\t", header=None, names=colnames )
 x = df["x"]
-y = df["f"]
+y = df["y"]
 # to store the interval (a,b) in which the zeros live
 zeros = {"a":[], "b":[], } #type: dict
 
@@ -17,3 +18,4 @@ for k in range(n):
 zeros_df = pd.DataFrame(zeros)
 #save to txt
 zeros_df.to_csv("zeros.dat", sep="\t", index=False)
+print(zeros_df)
