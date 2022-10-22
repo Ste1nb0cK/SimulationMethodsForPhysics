@@ -1,0 +1,195 @@
+#+title: Diffusion and Brownian Motion
+
+* Diffusion
+Diffusion is usually understood through Fick's law e.g if a free a lotion, there is a current that goes from high density regions to the low density ones, when one mixes this with mass conservation one obtains:
+$$\frac{\partial \rho}{\partial t}=D\nabla^2\rho$$
+where $D$ is the diffusion constant, this equation is called difussion equation.
+** Important Aspects:
+1) For any intial distribution, the standard deviation grows linearly with time.
+2) This process is really different from moving in vacuum, there the propagation of the substante can happen /MUCH/ faster.
+3) Particles of the substante being propagated collide constantly with those of the medium, this is where brownian motion enters the picture.
+
+* Brownian Motion
+How do you model this thing? Einstein/Smoluchowski propose to use a random walk to model the random collisions with the particles.
+*** Solution to the Difussion Equation
+Lets say we know at the initial condition exactly where our particle is i.e. we got its probability distribution as a Dirac-delta, the solution to this is that after a time $t$ the distribution becomes a Gaussian:
+$$\frac{1}{\sqrt{2\piDt}}\exp\left(-\frac{1}{2}\left(\frac{x}{\sqrt{2}Dt}\right)^2\right)$$
+whose standard deviation grows linearly as time progresses. This means that one can model Brownian motion by using a random generator that samples a gaussian.
+*** How to Actually Model This: Brownian Dynamics and the Langevin Equation
+The idea is to instead of modeling all the molecules in the medium, one limits it to random collisions, the former is called /explicit water/ and the former /implicit water/. This is described by the Langevin equation:
+
+$$m_i\frac{dv_i}{dt}= -m_i\gamma_i v_i + F_R(t) + f_i(t)$$
+
+The first term correspond to viscosity, the second one to a random form and the last one the external force.
+*** Van Gunsteren and Berensden Algorithm
+The Langevin equation is integrated to obtain the position at $\Delta t  + t_n$ as a function of the position at $t_n$, this method allows to appoximate the equation with fourth order steps and a total of third order, this corresponds to a Verlet method and in fact it becomes the Verlet method when the viscosity goes to zero. The diffusion regime offers another simplification (the exact formulae are long so I am not putting them here). The steps to use this are:
+ 1) Assume $x(t_n)$ and $f(t_{n-1})$ are known
+ 2) Evaluate $f(t_n)$
+ 3) Calculate the derivative of $f(t_n)$ respect to time.
+ 4) Obtain the random value $X_n(\Delta t)$ from a Gaussian distribution.
+ 5) Calculate the position $x(t_{n+1})$
+What works for translation can be extened by analogy to rotations.
+
+*** Random Walk Model for 1D
+Any stochastic process (i.e. anything that gives the movement of the obstacle randomly ) can produce a diffusion provided the conditions are the same for all points in space and the same at each time step. The idea is the following:
+****  The Master Equation
+The probability of measuring the particle to be at $x$ at time $t + \Delta t$ is
+
+$$P(x, t+\Delta t) =\int_{\infty}^{\infty} {dlP(x-l)T(l)}$$
+
+i.e. we measure all the possible ways in which a particle can arrive at the point $x$, where $T(l)$ is the probability of the particle
+moving $l$ (a probability distribution for the displacements), this is the /Master Equation/. After a taylor expansion
+and assuming $<T>=0$ it can be converted into:
+
+$$\frac{P(x,t+\Delta t) - P(x,t)}{\Delta t} = \frac{a^2}{2\Delta t}\frac{\partial^2 P}{\partial x^2}$$
+
+where $a^2$ is the variance of the distribution $T$, in the small time step limit this gives the /Fokker-Planck Equation/
+
+$$\frac{\partial P}{\partial t} = \frac{a^2}{2\Delta t}\frac{\partial^2 P}{\partial x^2}$$
+
+if we identify $P(x) \propto \rho(x)$ then the Diffusion equation is recovered:
+
+$$\frac{\partial P}{\partial t} = D\frac{\partial^2 P}{\partial x^2}$$
+
+$$D = \lim_{\Delta t\to 0}\frac{a^2}{2\Delta t}$$
+
+*** 2D Lattice-Gas Diffusion
+We will consider a model for the 2D difussion:
+    1) The space is discretized into cells and each one can have multiple particles
+           with different velocities each. In the implementation the cell stores the velocities
+           of the particles in it.
+    2) At each time step each cell tosses a coin and based on the
+            result changes the velocities inside it , with probability:
+       + $p_0$ the velocities are not changed
+       + $p$ they rotate by 90 degrees
+       + $p$ they rotate by 270 degrees, this way there is a symmetry for rotating 90
+                degrees clockwise or anticlockwise
+       + $1-2p-p_0$ they rotate by 180 degrees
+    3) After the coin flip, the particles are moved according to ther velocities.
+    4) Back to 1.
+This produces in the limit of continous time and space a diffusion equation with diffucion constant
+$$D = \frac{p + p_0}{2(1-p-p_0)}$$
+* 1D Diffusion Automata Implementation
+The idea here is pretty much the same as in the 2D case, but somewhat simpler
+ 1) each cell has two velocity vectors that point to the neighboring cells.
+ 2) Binary Variables:  each velocity vector might or might not have an associated particle.
+ 3) Evolution Rule:
+    + with probability $p$ the velocities are not changes
+    + with probability $1-p$ the velocities are rotated by 180 degrees
+    + after the coin flip and update, the particles move and we go back to step 1.
+** Implementation
+This code relies on the Random64.h header for pesudorandom number generation.
+*** LatticeGas Class
+This class contains all the information of the array and its the core of the implementation
+#+NAME: LatticeGas Class
+#+BEGIN_SRC c++
+class LatticeGas{
+    private:
+        int n[Lx][Q];//Matrix of automatas. It stores how many particles are moving in each direction
+        int nnew[Lx][Q];//we use two copies for parallelism
+        int V[Q];//Directions Matrix. i=0 (move right), i=1(move left)
+    public:
+        LatticeGas(void); //the constructor that initializes the directions matrix
+        void Borrese(void); //make the whole lattice zero
+        //This iniatates the lattice using a random generator of the class Crandom. Only one particle is put into each cell and the are
+        //fills sampling a gaussian distribution
+        void Inicie(int N, double mu,  double sigma, Crandom & ran64);
+        //print the lattice
+        void Show(void);
+        //this updates the states of the cell i.e. coin flips
+        void Colisione(Crandom & ran64);
+        //this does the actual movement of particle from one cell to the other
+        void Adveccione(void);
+        double rho(int ix){return n[ix][0] + n[ix][1];}//inline. Returns the number of particles in the cell
+        //Variance of the distribution of particles
+        double Varianza(void);
+        //plots the histogram of the lattice
+        void GrafiqueRho(void);
+};
+#+END_SRC
+
+*** Main Programm
+#+NAME: main programm
+#+BEGIN_SRC c++
+int main(void){
+    LatticeGas Difusion;
+    Crandom ran64(1); //random number generator with seed 1
+    int N=400; //number of particles
+    double mu =Lx/2; //data for the gaussian that initiates
+    double sigma = Lx/8;
+    int t;
+    int tmax=400;
+
+    Difusion.Borrese();//make sure they all begin in zero
+    Difusion.Inicie(N, mu, sigma, ran64);//initiate
+    for (t=0; t<tmax;t++){
+        std::cout << t << "\t " << Difusion.Varianza() << std::endl;//print variance and th step
+        Difusion.Colisione(ran64);//coin flip
+        Difusion.Adveccione();//move
+    }
+    // Difusion.GrafiqueRho();
+    return 0;
+}
+#+END_SRC
+
+*** Results
+#+CAPTION: Standard Deviation Result
+#+NAME: Standard Deviation Plot
+[[./Results1DVariance.jpg]]
+* Chapman-Enskog Expansion
+Lets recall how the model works:
+1) will call $n_0(x,t)$ the variable that tells us
+    if there is a particle pointing right i.e.the right arrow of the cell is
+    occupied, and $n_1(x,t)$ the varible that tells us if the left arrow is occupied.
+    This varibles are binary.
+2) at each time $t$ the cell $x$ tosses a coin $\mu(x,t)$ such that:
+
+  $\mu(x,t) = 1$ with probability $p$
+  $\mu(x,t) = 0$ with probability $1-p$
+
+  Note that each cell has his own $\mu(x,t)$. The idea is that if the result is 1,
+  the do nothing and if it is 0 they interchange velocities.
+3) After the last step the content of the cell travels to the adjacent cells
+    + The result after the toss is:
+
+      $$n_0(x + \lambda,t + \delta t) = \mu(x,t)n_0(x,t) + [1-\mu(x,t)]n_1(x,t)$$
+      $$n_0(x - \lambda,t + \delta t) = \mu(x,t)n_1(x,t) + [1-\mu(x,t)]n_0(x,t)$$
+
+      This describes the effect of movement of content and mixing of it, what
+      we call advenction.
+** Ensembles and Averages
+Suppose we had an ensemble of lattices and we wish to average over it, we define
+
+$$f_i(x,t) = m<n_i(x,t)>$$
+
+where $m$ is the mass of the particle. We will have:
+
+$$f_0(x + \lambda,t + \delta t) = pf_0(x,t) + [1-p)]f_1(x,t)$$
+$$f_1(x + \lambda,t + \delta t) = pf_1(x,t) + [1-p)]f_0(x,t)$$
+
+This is written compactly as
+
+$$f_i(x + v_i\delta t,t + \delta t) - f_i(x,t) =  (1-p)[f_i(x,t)-f_j(x,t)]$$
+
+with
+$$v_i = C_i\frac{\lambda}{\delta t}$$
+
+$C_i = 1$ for $i=0$
+$C_i = -1$ for $i=1$
+
+$$j = i+1 (mod2)$$
+
+*** Important details:
+$$\sum_{i} v_i = 0$$
+$$\sum_{i} v_i^2 = \frac{\lambda^2}{\delta t^2}$$
+** The expansion
+Notice that we can write a taylor series of $f$ as:
+
+$$f_i(x + v_i\delta t,t + \delta t) - f_i(x,t) = \delta t \left [\frac{\partial}{\partial t} + v_i\frac{\partial}{\partial x}\right]f_i+\frac{\delta t^2}{2} \left[\frac{\partial}{\partial t} + v_i\frac{\partial}{\partial x} \right ] ^2 f_i $$
+
+This is then used with a perturbative expansion and it is found that in the
+macroscopic limit the Diffusion equation is obeyed. The calculation is quite
+long so it es easier to consult this in the literature.
+
+
+

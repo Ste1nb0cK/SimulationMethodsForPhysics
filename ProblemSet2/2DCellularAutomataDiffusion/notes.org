@@ -1,0 +1,38 @@
+#+title: Notes Problem 1
+#+author: Nicolás A. N. Salas
+
+* 2D Diffusion Celullar Automata
+The problem consists in simulating a 2D gas by using a square
+lattice in which each cell has four velocity vectors that
+transport the contents to the neighbors. Each cell may or may not
+have a particle.
+** Evolution rule
+1) Each cell generates a random number between 1 and 0.
+2) Independently they decide what to do with the velocity
+   vectors depending on the result.
+   + With probability $p_0$ it does nothing.
+   + With probability $p$ it rotates 90°.
+   + With probability $1-2p-p_0$ it rotates 180°.
+   + With probability $p$ it rotates 270°.
+3) Each cell transports their contents
+** Continuous Limit
+In the continous limit i.e. small time steps and small cell size the difussion equation is recovered
+with difussion constant
+
+$$D = \frac{p+p_0}{2\left(1-(p+p_0)\right)}$$
+** Implementation
+*** n and nnew arrays
+We will use two copies of the arrays,  we will apply the evolution rule in nnew but the actual movement happens in n.
+This is very similar to how LB methods work and will make their
+transition to them easier.
+*** Deciding Rotations
+After sampling number between 0 and 1 we decide what to with the velocities using the
+following rule:
+let $\alpha$ be the result and suppose $p_0 \leq p$
++ if $0<\alpha < p_0$ do nothing.
++ if $p_0<\alpha < p+p_0$ rotate 90 .
++ if $p+p0<\alpha < 2p+p_0$ rotate 270° .
++ else rotate 180°
+The rotations are first done on the nnew array
+*** Moving Contents Around
+Actual movement is done by using the updated values in nnew.

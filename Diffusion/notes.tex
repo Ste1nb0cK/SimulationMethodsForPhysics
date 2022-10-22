@@ -1,0 +1,132 @@
+% Created 2022-10-16 Sun 16:34
+% Intended LaTeX compiler: pdflatex
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{capt-of}
+\usepackage{hyperref}
+\author{Nicolás A. N. Salas}
+\date{\today}
+\title{Diffusion and Brownian Motion}
+\hypersetup{
+ pdfauthor={Nicolás A. N. Salas},
+ pdftitle={Diffusion and Brownian Motion},
+ pdfkeywords={},
+ pdfsubject={},
+ pdfcreator={Emacs 27.1 (Org mode 9.6)}, 
+ pdflang={English}}
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+
+\section{Diffusion}
+\label{sec:org30879c8}
+Diffusion is usually understood through Fick's law e.g if a free a lotion, there is a current that goes from high density regions to the low density ones, when one mixes this with mass conservation one obtains:
+$$\frac{\partial \rho}{\partial t}=D\nabla^2\rho$$
+where \(D\) is the diffusion constant, this equation is called difussion equation.
+\subsection{Important Aspects:}
+\label{sec:org212218c}
+\begin{enumerate}
+\item For any intial distribution, the standard deviation grows linearly with time.
+\item This process is really different from moving in vacuum, there the propagation of the substante can happen \emph{MUCH} faster.
+\item Particles of the substante being propagated collide constantly with those of the medium, this is where brownian motion enters the picture.
+\end{enumerate}
+
+\subsection{Brownian Motion}
+\label{sec:org76ef5e1}
+How do you model this thing? Einstein/Smoluchowski propose to use a random walk to model the random collisions with the particles.
+\subsubsection{Solution to the Difussion Equation}
+\label{sec:org522164b}
+Lets say we know at the initial condition exactly where our particle is i.e. we got its probability distribution as a Dirac-delta, the solution to this is that after a time \(t\) the distribution becomes a Gaussian:
+$$\frac{1}{\sqrt{2\piDt}}\exp(-\frac{1}{2}(\frac{x}{\sqrt{2}}Dt))$$
+whose standard deviation grows as time progresses. This means that one can model Brownian motion by using a random generator that samples a gaussian.
+\subsubsection{How to Actually Model This: Brownian Dynamics and the Langevin Equation}
+\label{sec:org33c0c7b}
+The idea is to instead of modeling all the molecules in the medium, one limits it to random collisions, the former is called \emph{explicit water} and the former \emph{implicit water}. This is described by the Langevin equation:
+
+$$m_i\frac{dv_i}{dt}= -m_i\gamma_i v_i + F_R(t) + f_i(t)$$
+
+The first term correspond to viscosity, the second one to a random form and the last one the external force.
+\subsubsection{Van Gunsteren and Berensden Algorithm}
+\label{sec:orgc22e586}
+The Langevin equation is integrated to obtain the position at \(\Delta t  + t_n\) as a function of the position at \(t_n\), this method allows to appoximate the equation with fourth order steps and a total of third order, this corresponds to a Verlet method and in fact it becomes the Verlet method when the viscosity goes to zero. The diffusion regime offers another simplification (the exact formulae are long so I am not putting them here). The steps to use this are:
+\begin{enumerate}
+\item Assume \(x(t_n)\) and \(f(t_{n-1})\) are known
+\item Evaluate \(f(t_n)\)
+\item Calculate the derivative of \(f(t_n)\) respect to time.
+\item Obtain the random value \(X_n(\Delta t)\) from a Gaussian distribution.
+\item Calculate the position \(x(t_{n+1})\)
+\end{enumerate}
+What works for translation can be extened by analogy to rotations.
+
+\subsubsection{Random Walk Model for 1D}
+\label{sec:org57233d5}
+Any stochastic process (i.e. anything that gives the movement of the obstacle randomly ) can produce a diffusion provided the conditions are the same for all points in space and the same at each time step. The idea is the following:
+\begin{enumerate}
+\item The Master Equation
+\label{sec:org7cbff99}
+The probability of measuring the particle to be at \(x\) at time \(t + \Delta t\) is
+
+$$P(x, t+\Delta t) =\int_{\infty}^{\infty} {dlP(x-l)T(l)}$$
+
+i.e. we measure all the possible ways in which a particle can arrive at the point \(x\), where \(T(l)\) is the probability of the particle
+moving \(l\) (a probability distribution for the displacements), this is the \emph{Master Equation}. After a taylor expansion
+and assuming \(<T>=0\) it can be converted into:
+
+$$\frac{P(x,t+\Delta t) - P(x,t)}{\Delta t} = \frac{a^2}{2\Delta t}\frac{\partial^2 P}{\partial x^2}$$
+
+where \(a^2\) is the variance of the distribution \(T\), in the small time step limit this gives the \emph{Fokker-Planck Equation}
+
+$$\frac{\partial P}{\partial t} = \frac{a^2}{2\Delta t}\frac{\partial^2 P}{\partial x^2}$$
+
+if we identify \(P(x) \propto \rho(x)\) then the Diffusion equation is recovered:
+
+$$\frac{\partial P}{\partial t} = D\frac{\partial^2 P}{\partial x^2}$$
+
+$$D = \lim_{\Delta t\to 0}\frac{a^2}{2\Delta t}$$
+\end{enumerate}
+
+\subsubsection{2D Lattice-Gas Diffusion}
+\label{sec:org10783a5}
+We will consider a model for the 2D difussion:
+\begin{enumerate}
+\item The space is discretized into cells and each one can have multiple particles
+with different velocities each. In the implementation the cell stores the velocities
+of the particles in it.
+\item At each time step each cell tosses a coin and based on the
+result changes the velocities inside it , with probability:
+\begin{itemize}
+\item \(p_0\) the velocities are not changed
+\item \(p\) they rotate by 90 degrees
+\item \(p\) they rotate by 270 degrees, this way there is a symmetry for rotating 90
+degrees clockwise or anticlockwise
+\item \(1-2p-p_0\) they rotate by 180 degrees
+\end{itemize}
+\item After the coin flip, the particles are moved according to ther velocities.
+\item Back to 1.
+\end{enumerate}
+This produces in the limit of continous time and space a diffusion equation with diffucion constant
+$$D = \frac{p + p_0}{2(1-p-p_0)}$$
+\subsubsection{1D Diffusion Automata}
+\label{sec:org6c426d9}
+The idea here is pretty much the same as in the 2D case, but somewhat simpler
+\begin{enumerate}
+\item each cell has two velocity vectors that point to the neighboring cells.
+\item Binary Variables:  each velocity vector might or might not have an associated particle.
+\item Evolution Rule:
+\begin{itemize}
+\item with probability \(p\) the velocities are not changes
+\item with probability \(1-p\) the velocities are rotated by 180 degrees
+\item after the coin flip and update, the particles move and we go back to step 1.
+\end{itemize}
+\end{enumerate}
+\end{document}
