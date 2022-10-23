@@ -44,7 +44,7 @@ class LatticeGas{
 LatticeGas::LatticeGas(void){
     //horizontales / verticales
     V[0]=1; V[1]=-1;
-    V[2]=1; V[3]=-1;
+    V[2]=-1; V[3]=1;
 }
 void LatticeGas::Borrese(void){
     for(int ix=0; ix<Lx; ix++){
