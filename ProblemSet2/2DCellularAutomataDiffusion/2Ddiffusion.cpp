@@ -74,7 +74,8 @@ void LatticeGas::Inicie(int N ,double mu_x, double mu_y,  double sigma_x,
         if(jy>Ly-1){jy=Ly-1;}
         //choose direction randomly
         k = (int) Q*ran64.r();
-        //add a particle to the cell, only if there is no particle. Decreese N
+        //add a particle to the cell, only if there is no particle in that
+        //direction. Decreese N
         if(n[ix][jy][k]==0){
             n[ix][jy][k]=1;
             N--;}
@@ -106,7 +107,7 @@ void LatticeGas::Colisione(Crandom & ran64){
                     nnew[ix][jy][(k+3 + Q)%Q] = n[ix][jy][k];
             }
             //else rotate 180°
-            else if((1-2*p-p0<alpha)) {
+            else if((2*p+p0<alpha )  & (alpha<1)) {
                 for(k=0; k<Q; k++)
                     nnew[ix][jy][(k+2 + Q)%Q] = n[ix][jy][k];
             }
