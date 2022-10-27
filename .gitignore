@@ -5,3 +5,4 @@
 *.o
 foo
 */.mypy_cache
+*.log

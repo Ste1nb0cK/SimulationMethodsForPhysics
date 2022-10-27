@@ -1,7 +1,7 @@
 #+title: Notes Problem 1
 #+author: Nicolás A. N. Salas
 
-* 2D Diffusion Celullar Automata
+* 2D Diffusion Celullar Automata (discrte)
 The problem consists in simulating a 2D gas by using a square
 lattice in which each cell has four velocity vectors that
 transport the contents to the neighbors. Each cell may or may not
@@ -36,3 +36,17 @@ let $\alpha$ be the result and suppose $p_0 \leq p$
 The rotations are first done on the nnew array
 *** Moving Contents Around
 Actual movement is done by using the updated values in nnew.
+
+
+
+* 2D Diffusion Celullar Automata (discrte)
+This verison fo the algorithm is not very different, the only real
+difference is that now the evolution rule moves porpotions instead
+of flipping a coin as we are dealing with the densities.
+** Evolution rule
+1) The proportions after the collision are:
+   + $f_{n new} = p_0f_n + pf_e + pf_w + (1-2p-p_0)f_s$
+   + $f_{s new} = (1-2p-p_0)f_n + pf_e + pf_w + p_0f_s$
+   + $f_{e new} = pf_n + p_0f_e + (1-2p-p_0)f_w + pf_s$
+   + $f_{w new} = pf_n + (1-2p-p0)f_e + p_0f_w + pf_s$
+2) Propagate to other cells
